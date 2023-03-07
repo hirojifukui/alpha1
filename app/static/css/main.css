@@ -1,0 +1,53 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+  }
+  
+  h1 {
+    color: #0072c6;
+  }
+  
+  form {
+    margin-top: 20px;
+  }
+  
+  .corrected-text {
+    color: green;
+    margin-top: 20px;
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+  
+  th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+  
+  th {
+    background-color: #0072c6;
+    color: white;
+  }
+  
+  a {
+    color: #0072c6;
+    text-decoration: none;
+  }
+  
+  .fa-edit {
+    color: green;
+  }
+  
+  .fa-trash {
+    color: red;
+  }
+  
+  .parag {
+    width: 85%;
+    height: 20%;
+  }
+  

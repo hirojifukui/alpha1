@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Update Prompt</title>
+</head>
+<body>
+  <h1>Update Prompt</h1>
+  <form method="post">
+    {{ form.hidden_tag() }}
+    <div>
+      {{ form.title.label }} {{ form.title(size=32) }}
+    </div>
+    <div>
+      {{ form.prompt.label }} {{ form.prompt(cols="90%", rows="20") }}
+    </div>
+    <div>
+      {{ form.instruction.label }} {{ form.instruction(cols="90%", rows="10") }}
+    </div>
+    <div>
+      {{ form.submit() }}
+    </div>
+  </form>
+</body>
+</html>

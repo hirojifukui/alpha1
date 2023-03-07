@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home</title>
+</head>
+<body>
+  <h1>Prompts</h1>
+  <table>
+    <tr>
+      <th>Prompt Title</th>
+    </tr>
+    {% for prompt in prompts %}
+    <tr>
+      <td><a href="{{ url_for('prompt', _id=prompt[0]) }}">{{ prompt[1] }}</a></td>
+      <td>
+        <a href="{{ url_for('update_prompt', _id=prompt[0]) }}"><img src="/static/img/edit.png"></a>
+        <a href="{{ url_for('delete_prompt', _id=prompt[0]) }}"><img src="/static/img/trash.png"></a>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  <a href="{{ url_for('new_prompt') }}">Add New Prompt</a>
+</body>
+</html>
+

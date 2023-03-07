@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Delete Prompt</title>
+</head>
+<body>
+  <h1>Delete Prompt</h1>
+  <p>Title: {{ prompt["title"] }}</p>
+  <p>Prompt: {{ prompt["prompt"] }}</p>
+  <form method="post">
+    {{ form.hidden_tag() }}
+    <div>
+      {{ form.submit() }}
+    </div>
+  </form>
+</body>
+</html>
