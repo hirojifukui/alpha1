@@ -5,7 +5,7 @@ import pymongo
 import time
 from bson.objectid import ObjectId
 import openai
-#openai.api_key = "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"
+
 
 # Default settings
 native = "Japanese"
