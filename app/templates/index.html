@@ -13,7 +13,7 @@
     </tr>
     {% for prompt in prompts %}
     <tr>
-      <td><a href="{{ url_for('prompt', _id=prompt[0]) }}">{{ prompt[1] }}</a></td>
+      <td><a href="{{ url_for('conversation', _id=prompt[0]) }}">{{ prompt[1] }}</a></td>
       <td>
         <a href="{{ url_for('update_prompt', _id=prompt[0]) }}"><img src="/static/img/edit.png"></a>
         <a href="{{ url_for('delete_prompt', _id=prompt[0]) }}"><img src="/static/img/trash.png"></a>

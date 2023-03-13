@@ -13,10 +13,13 @@
       {{ form.title.label }} {{ form.title(size=32) }}
     </div>
     <div>
-      {{ form.prompt.label }} {{ form.prompt(cols="90%", rows="20") }}
+      {{ form.description.label }} {{ form.description(cols="90%", rows="3") }}
     </div>
     <div>
-      {{ form.instruction.label }} {{ form.instruction(cols="90%", rows="10") }}
+      {{ form.prompt.label }} {{ form.prompt(cols="90%", rows="10") }}
+    </div>
+    <div>
+      {{ form.instruction.label }} {{ form.instruction(cols="90%", rows="5") }}
     </div>
     <div>
       {{ form.submit() }}

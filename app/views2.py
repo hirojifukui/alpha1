@@ -23,6 +23,32 @@ prompts_collection = db["a2_prompts"]
 logs_collection = db["conv_log"]
 user_col = db["user"]
 
+def transcribe(audio):
+    global messages
+
+    audio_file = open(audio, "rb")
+    transcript = openai.Audio.transcribe("whisper-1", audio_file)
+
+    messages.append({"role": "user", "content": transcript["text"]})
+
+    response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
+
+    system_message = response["choices"][0]["message"]
+    messages.append(system_message)
+    engine = pyttsx3.init()
+    #subprocess.run(["say", system_message['content']])
+    #subprocess.Popen([r"start", r"I:\My Drive\RISU\System development\OpenAI\Subprocess\tts_test.py"], shell=True)
+    engine.say(system_message['content'])
+    engine.runAndWait()
+    engine.stop()
+    chat_transcript = ""
+    for message in messages:
+        if message['role'] != 'system':
+            chat_transcript += message['role'] + ": " + message['content'] + "\n\n"
+
+    return chat_transcript
+
+
 # Return GPT-3 response. Prompt and Temperature are inputs
 def ai_reply(prompt, temp):
     return openai.Completion.create(
@@ -35,6 +61,7 @@ def ai_reply(prompt, temp):
             )["choices"][0]["text"].strip()
 
 
+
 @app.route("/", methods=["GET"])
 def index():
     prompts = prompts_collection.find()
@@ -42,57 +69,29 @@ def index():
     return render_template("index.html", prompts = prompt_list)
 
 # Route for handling the conversation
-@app.route("/conversation/<_id>", methods=["GET"])
+@app.route("/conversation/<_id>", methods=["GET", "POST"])
 def conversation(_id):
-    prompt = prompts_collection.find_one({"_id": ObjectId(_id)})
-    print(prompt)
-    messages = prompt["prompt"]
-    msg_len = len(messages)
-    print(datetime.now())
-    key = str(datetime.now())+"+"+str(_id)
-    print("key: ", key)
-    _id = logs_collection.insert_one({"key": key, "user_id": user_id, "name": name, "msg_len": msg_len,
-                                      "prompt": ObjectId(_id), "messages":messages})
-    print("Conversation prompt: ", prompt)
-    chat_transcript = []
-    td = {"key":key, "chat":chat_transcript, "msg_len":msg_len, "inst": prompt["instruction"]}
-    return render_template("conversation.html", td = td, request="POST")
-
-@app.route("/talk", methods=["GET", "POST"])
-def talk():
+    print("Conversation/inserted_id", _id)
     form = ReplyForm()
-    if request.method == "POST":
+    if request.method == "POST" and form.validate_on_submit():
         #prompt = prompts_collection.find_one({"title": title})["prompt"]
         # Check grammer of user reply
-        # print("Form.reply.data: ",form.reply.data)
-        print("Return key : ",request.form["key"])
-        f = request.files['audio_data']
-        # fk = request.form["key"]
-        # print(fk)
-        with open('audio.wav', 'wb') as audio:
-            f.save(audio)
-        print("Save audio.wav")
-        audio_file = open('audio.wav', "rb")
-        transcript = openai.Audio.transcribe("whisper-1", audio_file)
-        print("Transript: ", transcript["text"])
-
-        if transcript["text"].lower != "stop":
-            instruction = request.form["inst"]
-            key = request.form["key"]
+        print("Form.reply.data: ",form.reply.data)
+        print("Return key : ",form.key.data)
+        if form.reply.data.strip() != "Stop" and form.reply.data != "":
+            instruction = form.instruction.data
+            key = form.key.data
             print("Key: ", key)
             prev_messages = logs_collection.find_one({"key": key})
             messages = prev_messages["messages"]
-            messages.append({"role": "user", "content": transcript["text"]})
-            # message = {"role":"user", "content":form.reply.data}
-            # messages.append(message)
+            message = {"role":"user", "content":form.reply.data}
+            messages.append(message)
             print("messages: ", messages)
             # ChatGPT
             response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
-            # system_message = response["choices"][0]["message"]
-            system_message = {"role": response["choices"][0]["message"]["role"], 
-                              "content": response["choices"][0]["message"]["content"]}
+            system_message = response["choices"][0]["message"]
             messages.append(system_message)
-            print("Messages with AI reply: ", messages)
+
             # Text to Speech
             engine = pyttsx3.init()
             engine.say(system_message['content'])
@@ -101,24 +100,20 @@ def talk():
 
             logs_collection.update_one({"key": key}, { "$set": {"messages": messages}})
             print(messages)
-            print("Msg_len: ", request.form["msg_len"], " type: ", type(request.form["msg_len"]))
-            chat_transcript = messages[int(request.form["msg_len"]):]
-            
+            print("Msg_len: ", form.msg_len.data, " type: ", type(form.msg_len.data))
+            chat_transcript = messages[int(form.msg_len.data):]
             # form = ReplyForm(reply = "")
             # form.process()
-            # form.reply.data = ""
-            td = {"key":key, "chat":chat_transcript, "msg_len":request.form["msg_len"], "inst": request.form["inst"]}
-            print("TD: ", td)
-            return td
-        # elif transcript["text"].lower == "stop":
-        else:
+            form = ReplyForm(reply = "", key=key, msg_len = form.msg_len.data, instruction = instruction)
+            return render_template("conversation.html", form=form, conv=chat_transcript, instruction = instruction)
+        elif form.reply.data.strip() == "Stop":
             return redirect(url_for("index"))
-        # elif transcript["text"].lower == "":
-        #     form.reply.data = "Please enter your reply"
-        #     return render_template("conversation.html", form=form, conv=chat_transcript, instruction = instruction)
-        # else:
-        #     form.reply.data = ""
-        #     return render_template("conversation.html", form=form, conv=chat_transcript, instruction = instruction)
+        elif form.reply.data == "":
+            form.reply.data = "Please enter your reply"
+            return render_template("conversation.html", form=form, conv=chat_transcript, instruction = instruction)
+        else:
+            form.reply.data = ""
+            return render_template("conversation.html", form=form, conv=chat_transcript, instruction = instruction)
     # Get the prompt from the MongoDB database based on the selected title 
     #prompt_id = logs_collection.find_one({"_id": ObjectId(_id)})["prompt"]       
     prompt = prompts_collection.find_one({"_id": ObjectId(_id)})
@@ -132,8 +127,8 @@ def talk():
                                       "prompt": ObjectId(_id), "messages":messages})
     print("Conversation prompt: ", prompt)
     chat_transcript = []
-    td = {"key":key, "chat":chat_transcript, "msg_len":msg_len, "inst": prompt["instruction"]}
-    return render_template("conversation.html", td=td, request = "POST")
+    form = ReplyForm(request.values, key=key, conv=chat_transcript, msg_len = msg_len, instruction = prompt["instruction"])
+    return render_template("conversation.html", form=form, instruction = prompt["instruction"])
 
 # Route for adding a new prompt
 @app.route("/new", methods=["GET", "POST"])
@@ -146,9 +141,9 @@ def new_prompt():
                 pid = x
         pid += 1
         # Insert the new prompt into the prompts collection in MongoDB
-        prompts_collection.insert_one({"pid": pid, "title": form.title.data,
-             "description": form.description.data,"prompt": form.prompt.data,
-             "time_created": datetime.now(), "instruction": form.instruction.data,
+        prompts_collection.insert_one({"pid": pid,
+            "title": form.title.data, "description": form.description.data,
+            "prompt": form.prompt.data, "time_created": datetime.now(),
             "active":True})
         return redirect(url_for("index"))
     return render_template("new_prompt.html", form=form)
@@ -158,15 +153,15 @@ def update_prompt(_id):
     form = UpdatePromptForm()
     if form.validate_on_submit():
         # Update the prompt in the prompts collection in MongoDB
-        prompts_collection.update_one({"_id": ObjectId(form._id.data)}, 
+        objInstance = ObjectId(form._id.data)
+        prompts_collection.update_one({"_id": objInstance}, 
                                       {"$set": {"title": form.title.data, "description": form.description.data, 
-                                        "prompt": form.prompt.data, "time_updated": datetime.now(),
-                                        "instruction": form.instruction.data}})
+                                        "prompt": form.prompt.data, "time_updated": datetime.now()}})
         return redirect(url_for("index"))
-    prompt = prompts_collection.find_one({"_id": ObjectId(_id)})
+    objInstance = ObjectId(_id)
+    prompt = prompts_collection.find_one({"_id": objInstance})
     form.title.data = prompt["title"]
     form.prompt.data = prompt["prompt"]
-    form.instruction.data = prompt["instruction"]
     form._id.data = _id
     return render_template("update_prompt.html", form=form)
 

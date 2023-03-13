@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/static/css/main.css">
+  <title>Conversation</title>
+  <style>
+    .corrected-text {
+      color: green;
+    }
+  </style>
+</head>
+<body>
+  <a href = "index.html"><h1>Conversation</h1></a>
+  {{key}}
+  {{instruction}}
+  {% if conv %}
+  {{instruction}}
+    <table>
+      <tr>
+        <th>who</th><th>what</th>
+      </tr>
+      {% for x in conv %}
+      <tr><td>{{ x["role"]}}</td><td>{{x["content"]}}</td></tr>
+      {% endfor %}
+    </table>
+  {% endif %}
+  <form method="post">
+    {{ form.hidden_tag() }}
+    <div>
+      {{ form.reply.label }} {{ form.reply(cols="90%", rows="1") }}
+    </div>
+    <div>
+      {{ form.submit() }}
+    </div>
+  </form>
+</body>
+</html>

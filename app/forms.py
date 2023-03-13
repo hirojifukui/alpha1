@@ -10,9 +10,11 @@ from wtforms.widgets import TextArea
 
 # Form for entering a reply
 class ReplyForm(FlaskForm):
-    conv_id = HiddenField()
-    reply = StringField("Reply", widget=TextArea(), validators=[DataRequired()])
-    submit = SubmitField("Submit")
+    # reply = StringField("Reply", widget=TextArea(), validators=[DataRequired()])
+    key = HiddenField("key")
+    # msg_len = HiddenField("msg_len")
+    # instruction = HiddenField("instruction")
+    # submit = SubmitField("Submit")
 
 class ChatForm(FlaskForm):
     text = StringField("Your response:")
@@ -21,8 +23,9 @@ class ChatForm(FlaskForm):
 class UpdatePromptForm(FlaskForm):
     _id = HiddenField("_id")
     title = StringField("Title:")
+    description = StringField("Description:", widget=TextArea())
     prompt = StringField("Prompt:", widget=TextArea())
-    instruction = StringField("Instruction: ")
+    instruction = StringField("Instruction: ", widget=TextArea())
     submit = SubmitField("Update")
 
 class DeletePromptForm(FlaskForm):
@@ -31,6 +34,7 @@ class DeletePromptForm(FlaskForm):
 
 class NewPromptForm(FlaskForm):
     title = StringField("Title:")
+    description = StringField("Description:", widget=TextArea())
     prompt = StringField("Prompt:", widget=TextArea())
-    instruction = StringField("Instruction: ")
+    instruction = StringField("Instruction: ", widget=TextArea())
     submit = SubmitField("Add")
