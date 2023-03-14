@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, request, send_from_directory
+from flask import render_template, redirect, url_for, request
 from .forms import ReplyForm, NewPromptForm, UpdatePromptForm, DeletePromptForm
 from . import app
 import pymongo
@@ -6,11 +6,6 @@ from datetime import datetime
 from bson.objectid import ObjectId
 import openai
 import pyttsx3
-import os
-import requests
-import json
-import time
-
 #openai.api_key = "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"
 
 # Default settings
@@ -18,24 +13,6 @@ native = "Japanese"
 name = "Hiroji: "
 user_id = "0000000001"
 ai = "assistant: "
-api_key = os.getenv('API_KEY')
-stopphrases=['stop', 'stop.', 'please stop', 'please stop.', 'cтоп.', "cтоп"]
-headers = {
-            'accept': 'audio/mpeg',
-            'xi-api-key': api_key,
-            'Content-Type': 'application/json'
-            }
-url ="https://api.elevenlabs.io/v1/"
-voice_id = '21m00Tcm4TlvDq8ikWAM'
-# {'voice_id': '21m00Tcm4TlvDq8ikWAM', 'name': 'Rachel'}
-# {'voice_id': 'AZnzlk1XvdvUeBnXmlld', 'name': 'Domi'}
-# {'voice_id': 'EXAVITQu4vr4xnSDxMaL', 'name': 'Bella'}
-# {'voice_id': 'ErXwobaYiN019PkySvjV', 'name': 'Antoni'}
-# {'voice_id': 'MF3mGyEYCl7XYWbV9V6O', 'name': 'Elli'}
-# {'voice_id': 'TxGEqnHWrfWFTfGW9XjX', 'name': 'Josh'}
-# {'voice_id': 'VR6AewLTigWG4xSOukaG', 'name': 'Arnold'}
-# {'voice_id': 'pNInz6obpgDQGcFmaJgB', 'name': 'Adam'}
-# {'voice_id': 'yoZ06aMxZJJ28mfd3POQ', 'name': 'Sam'}
 #grammer_check="この英語を文法的に必要なら標準的な英語に変更し、修正がある場合は、修正した点を日本語で文法的に説明してください。: "
 grammer_check="Correct this to standard English and explain the improvement pointd in " + native + ": "
 
@@ -99,9 +76,7 @@ def talk():
         transcript = openai.Audio.transcribe("whisper-1", audio_file)
         print("Transript: ", transcript["text"])
 
-        if transcript["text"].lower() in stopphrases:
-            print("Going back to home")
-        else:
+        if transcript["text"].lower != "stop":
             instruction = request.form["inst"]
             key = request.form["key"]
             print("Key: ", key)
@@ -119,25 +94,10 @@ def talk():
             messages.append(system_message)
             print("Messages with AI reply: ", messages)
             # Text to Speech
-            response = requests.get(url + "voices", headers=headers)
-            if response.status_code != 200:
-                print("Get response: ", response.text)
-            response = requests.post(url+ "text-to-speech/" + voice_id, json={"text": system_message['content']}, headers=headers)
-            if response.status_code != 200:
-                print("Post response: ", response.status_code)
-            filename = "output" + str(time.time())
-            files = os.listdir("app/static/audio/")
-            print(files)
-            for file in files:
-                if file[-3:] == "mp3":
-                    os.remove("app/static/audio/" + file)
-            print("Filename: ", filename)
-            with open('app/static/audio/' + filename + '.mp3', 'wb') as f:
-                f.write(response.content)
-            # engine = pyttsx3.init()
-            # engine.say(system_message['content'])
-            # engine.runAndWait()
-            # engine.stop()
+            engine = pyttsx3.init()
+            engine.say(system_message['content'])
+            engine.runAndWait()
+            engine.stop()
 
             logs_collection.update_one({"key": key}, { "$set": {"messages": messages}})
             print(messages)
@@ -147,11 +107,12 @@ def talk():
             # form = ReplyForm(reply = "")
             # form.process()
             # form.reply.data = ""
-            td = {"key":key, "chat":chat_transcript, "msg_len":request.form["msg_len"], 
-                  "inst": request.form["inst"], "filename":filename}
+            td = {"key":key, "chat":chat_transcript, "msg_len":request.form["msg_len"], "inst": request.form["inst"]}
             print("TD: ", td)
             return td
-          
+        # elif transcript["text"].lower == "stop":
+        else:
+            return redirect(url_for("index"))
         # elif transcript["text"].lower == "":
         #     form.reply.data = "Please enter your reply"
         #     return render_template("conversation.html", form=form, conv=chat_transcript, instruction = instruction)
@@ -173,10 +134,6 @@ def talk():
     chat_transcript = []
     td = {"key":key, "chat":chat_transcript, "msg_len":msg_len, "inst": prompt["instruction"]}
     return render_template("conversation.html", td=td, request = "POST")
-
-@app.route('/audio/<path:filename>')
-def serve_audio(filename):
-    return send_from_directory('static/audio', filename)
 
 # Route for adding a new prompt
 @app.route("/new", methods=["GET", "POST"])

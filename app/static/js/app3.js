@@ -133,9 +133,6 @@ function render_html(textData) {
     document.getElementById("key").innerHTML = JSONData.key;
     document.getElementById("msg_len").innerHTML = JSONData.msg_len;
     document.getElementById("inst").innerHTML = JSONData.inst;
-    elm = document.getElementById('audio');
-    elm.remove();
-    document.getElementById("recordingsList").innerHTML = "<audio controls autoplay id = play><source src=\"/static/audio/" + JSONData.filename + ".mp3\" type=\"audio/mpeg\"></audio>";
 }
 
 function createDownloadLink(blob) {
@@ -203,10 +200,6 @@ function createDownloadLink(blob) {
         elm.remove();
         recordingsList.appendChild(li);
     } else{
-        elm2 = document.getElementById('play');
-        if (elm2){
-            elm2.remove();
-        }
         recordingsList.appendChild(li);
     }
     
